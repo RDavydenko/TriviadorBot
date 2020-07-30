@@ -244,8 +244,10 @@ namespace ImageRecogniser
 		// Распознать все (облегченная версия)
 		private void recogniseAllBtn_Click(object sender, EventArgs e)
 		{
-			var timer = new Stopwatch();
 
+			SetEmptyAllTexts();
+
+			var timer = new Stopwatch();
 
 			timer.Start();
 			Tesseract tessaract = new Tesseract(@"C:\tessdata", "rusf", OcrEngineMode.LstmOnly);
@@ -313,6 +315,18 @@ namespace ImageRecogniser
 
 			tessaract.Dispose();
 			richTextBox1.Text = QuestionText + "\n\n" + "1) " + Variant1Text + "\n2) " + Variant2Text + "\n3) " + Variant3Text + "\n4) " + Variant4Text + "\n\nВремя: " + timer.Elapsed.TotalSeconds + " с.";
+		}
+
+		private void SetEmptyAllTexts()
+		{
+			QuestionText = string.Empty;
+			Variant1Text = string.Empty;
+			Variant2Text = string.Empty;
+			Variant3Text = string.Empty;
+			Variant4Text = string.Empty;
+
+			NumberQuestionText = string.Empty;
+			NumberAnswerText = string.Empty;
 		}
 
 		// Нарезать (для тестового вопроса)
@@ -465,17 +479,13 @@ namespace ImageRecogniser
 				{
 					var hdcBitmap = graphics.GetHdc();
 					PrintWindow(hwnd, hdcBitmap, 0);
-					graphics.ReleaseHdc(hdcBitmap);					
+					graphics.ReleaseHdc(hdcBitmap);
 				}
-				//image.Save(@"screenshoots\cadr_" + number + ".png", ImageFormat.Png); // Опционально: сохранять или нет
-				//if (!IsFirstScreenFrame)
-				//{
-				//	CurrentScreen.Dispose(); // Очищаем старый
-				//	pictureBox1.Image.Dispose(); // Очищаем старый
-				//}
-				CurrentScreen = Bitmap.FromHbitmap(image.GetHbitmap());
+				CurrentScreen = image.ToImage<Bgr, byte>().AsBitmap();
 				pictureBox1.Image = CurrentScreen;
 				IsFirstScreenFrame = false;
+				CurrentScreen.Save($"screenshoots\\new_cadr_{ScreenshootNumber}.png", ImageFormat.Png);
+				GC.Collect();
 			}
 		}
 
@@ -509,7 +519,7 @@ namespace ImageRecogniser
 		}
 
 		private async Task AnalyzeFrame(Bitmap src)
-		{			
+		{
 			var firstPixel = src.GetPixel(1190, 468); // RGB (255, 255, 204) сверху справа
 			var secondPixel = src.GetPixel(509, 517); // RGB (242, 233, 219) сверху слева
 			var thirdPixel = src.GetPixel(1184, 816); // RGB (249, 245, 238) снизу справа
@@ -552,8 +562,8 @@ namespace ImageRecogniser
 						// Ждем, когда будет ответ 
 						bool isAnswerFounded = false;
 						int rightAnswerNumber = 0;
-						int count = 0; // Количество проходов цикла. Пусть максимальное будет 5 раз - три секунды
-						while (!isAnswerFounded && count < 10)
+						int count = 0; // Количество проходов цикла
+						while (!isAnswerFounded && count < 30)
 						{
 							ScreenShoot(); // Получение нового скриншота в CurrentScreen
 							var firstAnswerPixel = CurrentScreen.GetPixel(670, 511); // RGB (255, 220, 127) - желтый с правильным ответом
@@ -565,25 +575,25 @@ namespace ImageRecogniser
 							Colors.AddRange(new Color[] { firstAnswerPixel, secondAnswerPixel, thirdAnswerPixel, fourthAnswerPixel });
 
 							// Проверка на желтый (если да, то найден ответ)
-							if (firstAnswerPixel.R > 250 && firstAnswerPixel.R <= 255 && firstAnswerPixel.G > 215 && firstAnswerPixel.G < 225 && firstAnswerPixel.B > 123 && firstAnswerPixel.B < 132)
+							if (firstAnswerPixel.R > 250 && firstAnswerPixel.R <= 255 && firstAnswerPixel.G > 185 && firstAnswerPixel.G < 225 && firstAnswerPixel.B >= 0 && firstAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 1;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (secondAnswerPixel.R > 250 && secondAnswerPixel.R <= 255 && secondAnswerPixel.G > 215 && secondAnswerPixel.G < 225 && secondAnswerPixel.B > 123 && secondAnswerPixel.B < 132)
+							else if (secondAnswerPixel.R > 250 && secondAnswerPixel.R <= 255 && secondAnswerPixel.G > 185 && secondAnswerPixel.G < 225 && secondAnswerPixel.B >= 0 && secondAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 2;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (thirdAnswerPixel.R > 250 && thirdAnswerPixel.R <= 255 && thirdAnswerPixel.G > 215 && thirdAnswerPixel.G < 225 && thirdAnswerPixel.B > 123 && thirdAnswerPixel.B < 132)
+							else if (thirdAnswerPixel.R > 250 && thirdAnswerPixel.R <= 255 && thirdAnswerPixel.G > 185 && thirdAnswerPixel.G < 225 && thirdAnswerPixel.B >= 0 && thirdAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 3;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (fourthAnswerPixel.R > 250 && fourthAnswerPixel.R <= 255 && fourthAnswerPixel.G > 215 && fourthAnswerPixel.G < 225 && fourthAnswerPixel.B > 123 && fourthAnswerPixel.B < 132)
+							else if (fourthAnswerPixel.R > 250 && fourthAnswerPixel.R <= 255 && fourthAnswerPixel.G > 185 && fourthAnswerPixel.G < 225 && fourthAnswerPixel.B >= 0 && fourthAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 4;
 								isAnswerFounded = true;
@@ -678,8 +688,8 @@ namespace ImageRecogniser
 						// Ждем, когда будет ответ 
 						bool isAnswerFounded = false;
 						int rightAnswerNumber = 0;
-						int count = 0; // Количество проходов цикла. Пусть максимальное будет 5 раз - три секунды
-						while (!isAnswerFounded && count < 10)
+						int count = 0; // Количество проходов цикла.
+						while (!isAnswerFounded && count < 30)
 						{
 							ScreenShoot(); // Получение нового скриншота в CurrentScreen
 							var firstAnswerPixel = CurrentScreen.GetPixel(670, 511); // RGB (255, 220, 127) - желтый с правильным ответом
@@ -688,25 +698,25 @@ namespace ImageRecogniser
 							var fourthAnswerPixel = CurrentScreen.GetPixel(670, 757);
 
 							// Проверка на желтый (если да, то найден ответ)
-							if (firstAnswerPixel.R > 250 && firstAnswerPixel.R <= 255 && firstAnswerPixel.G > 215 && firstAnswerPixel.G < 225 && firstAnswerPixel.B > 123 && firstAnswerPixel.B < 132)
+							if (firstAnswerPixel.R > 250 && firstAnswerPixel.R <= 255 && firstAnswerPixel.G > 185 && firstAnswerPixel.G < 225 && firstAnswerPixel.B >= 0 && firstAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 1;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (secondAnswerPixel.R > 250 && secondAnswerPixel.R <= 255 && secondAnswerPixel.G > 215 && secondAnswerPixel.G < 225 && secondAnswerPixel.B > 123 && secondAnswerPixel.B < 132)
+							else if (secondAnswerPixel.R > 250 && secondAnswerPixel.R <= 255 && secondAnswerPixel.G > 185 && secondAnswerPixel.G < 225 && secondAnswerPixel.B >= 0 && secondAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 2;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (thirdAnswerPixel.R > 250 && thirdAnswerPixel.R <= 255 && thirdAnswerPixel.G > 215 && thirdAnswerPixel.G < 225 && thirdAnswerPixel.B > 123 && thirdAnswerPixel.B < 132)
+							else if (thirdAnswerPixel.R > 250 && thirdAnswerPixel.R <= 255 && thirdAnswerPixel.G > 185 && thirdAnswerPixel.G < 225 && thirdAnswerPixel.B >= 0 && thirdAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 3;
 								isAnswerFounded = true;
 								break;
 							}
-							else if (fourthAnswerPixel.R > 250 && fourthAnswerPixel.R <= 255 && fourthAnswerPixel.G > 215 && fourthAnswerPixel.G < 225 && fourthAnswerPixel.B > 123 && fourthAnswerPixel.B < 132)
+							else if (fourthAnswerPixel.R > 250 && fourthAnswerPixel.R <= 255 && fourthAnswerPixel.G > 185 && fourthAnswerPixel.G < 225 && fourthAnswerPixel.B >= 0 && fourthAnswerPixel.B < 220)
 							{
 								rightAnswerNumber = 4;
 								isAnswerFounded = true;
@@ -824,8 +834,8 @@ namespace ImageRecogniser
 		private async void analyzeBtn_Click(object sender, EventArgs e)
 		{
 			while (true)
-			{	
-				ScreenShoot();				
+			{
+				ScreenShoot();
 				await AnalyzeFrame(CurrentScreen);
 				await Task.Delay(1000);
 			}
