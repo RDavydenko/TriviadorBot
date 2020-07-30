@@ -44,7 +44,7 @@ namespace ConsoleRecogniser.Models
 
 		public TestQuestion FirstOrDefault(string text)
 		{
-			return _db.FirstOrDefault(t => t.Text == text && !string.IsNullOrEmpty(text) && !string.IsNullOrWhiteSpace(text));
+			return _db.FirstOrDefault(t => t.Text == text);
 		}
 
 		public void Save()

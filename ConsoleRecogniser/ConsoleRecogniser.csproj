@@ -56,10 +56,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Bot.cs" />
-    <Compile Include="Models\Clicker.cs" />
     <Compile Include="Models\CutterFHD.cs" />
     <Compile Include="Models\GameSituation.cs" />
-    <Compile Include="Models\IClicker.cs" />
     <Compile Include="Models\ICutter.cs" />
     <Compile Include="Models\IRecogniser.cs" />
     <Compile Include="Models\IRecogniserAsync.cs" />
