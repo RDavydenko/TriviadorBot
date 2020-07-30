@@ -12,15 +12,16 @@ namespace ConsoleRecogniser.Models
 	class Bot
 	{
 		private int _counter = 0; // Счетчик смены вопроса, каждые n раз - сохранение репозиториев		
-		private readonly Process _process;
+		private readonly Process _process; // Процесс, за которым следим (Браузер, например)
 
 		private readonly SyncMode mode; // Указывает на то, какой используется распознаватель (синхронный/асинхронный)
-		private readonly IRecogniser _recogniser;
-		private readonly IRecogniserAsync _recogniserAsync; // Опционально
+		private readonly IRecogniser _recogniser; // Синхронный распознаватель
+		private readonly IRecogniserAsync _recogniserAsync; // Ассинхронный распознаватель
 
-		private readonly IRepository<TestQuestion> _testRepository;
-		private readonly IRepository<NumericQuestion> _numericRepository;
-		private readonly ICutter _cutter;
+		private readonly IRepository<TestQuestion> _testRepository; // БД тестовых вопросов
+		private readonly IRepository<NumericQuestion> _numericRepository; // БД циферных вопросов
+		private readonly ICutter _cutter; // Разрезает Bitmap скриншота на фрагменты
+		private readonly IClicker _clicker; // Кликает по правильному ответу и набирает число
 
 		public Bitmap Screen { get; private set; }
 		public GameSituation Status { get; private set; } = GameSituation.Default;
@@ -31,7 +32,7 @@ namespace ConsoleRecogniser.Models
 		public string NumericText { get; private set; } // Текст ТЕКУЩЕГО циферного вопроса	
 
 
-		public Bot(int processId, IRecogniser recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter)
+		public Bot(int processId, IRecogniser recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker)
 		{
 			_process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 			if (_process == null)
@@ -45,9 +46,10 @@ namespace ConsoleRecogniser.Models
 			_testRepository = testRepository;
 			_numericRepository = numberRepository;
 			_cutter = cutter;
+			_clicker = clicker;
 		}
 
-		public Bot(int processId, IRecogniserAsync recogniserAsync, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter)
+		public Bot(int processId, IRecogniserAsync recogniserAsync, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker)
 		{
 			_process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 			if (_process == null)
@@ -61,6 +63,7 @@ namespace ConsoleRecogniser.Models
 			_testRepository = testRepository;
 			_numericRepository = numberRepository;
 			_cutter = cutter;
+			_clicker = clicker;
 		}
 
 		private GameSituation Analyze(Bitmap src)
@@ -116,16 +119,16 @@ namespace ConsoleRecogniser.Models
 
 					if (isInactive) // Тестовый неактивный (и без ответа)
 					{
-						if (Status == GameSituation.AnswerTest) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Простой
+						if (Status == GameSituation.AnswerTest) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Ответ
 						{
-							return GameSituation.Idle;
+							return GameSituation.AnswerTest;
 						}
 						return GameSituation.InactiveTest;
 					}
 
-					if (Status == GameSituation.AnswerTest) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Простой
+					if (Status == GameSituation.AnswerTest) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Ответ
 					{
-						return GameSituation.Idle;
+						return GameSituation.AnswerTest;
 					}
 					return GameSituation.ActiveTest;
 				}
@@ -150,16 +153,16 @@ namespace ConsoleRecogniser.Models
 
 					if (isInactive)
 					{
-						if (Status == GameSituation.AnswerNumeric) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Простой
+						if (Status == GameSituation.AnswerNumeric) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Ответ
 						{
-							return GameSituation.Idle;
+							return GameSituation.AnswerNumeric;
 						}
 						return GameSituation.InactiveNumeric; // Неактивный циферный и без ответа
 					}
 
-					if (Status == GameSituation.AnswerNumeric) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Простой
+					if (Status == GameSituation.AnswerNumeric) // Если прошлая ситуация - Ответ, то после нее не может быть (не)Активной, только Ответ
 					{
-						return GameSituation.Idle;
+						return GameSituation.AnswerNumeric;
 					}
 					return GameSituation.AnswerNumeric; // Активный циферный и без ответа
 				}
@@ -193,6 +196,7 @@ namespace ConsoleRecogniser.Models
 					Console.ForegroundColor = ConsoleColor.Green;
 					break;
 			}
+			Console.Write("[Состояние]: ");
 			Console.WriteLine(status);
 			Console.ResetColor();
 		}
@@ -217,7 +221,7 @@ namespace ConsoleRecogniser.Models
 				{
 					if (questionText == TestText) // Если ничего не поменялось, то выходим, т.к. вопрос еще не успел смениться
 					{
-						Console.WriteLine("Уже следим за этим вопросом -_-");
+						Debug.WriteLine("Уже следим за этим вопросом -_-");
 						return;
 					}
 
@@ -234,7 +238,8 @@ namespace ConsoleRecogniser.Models
 
 						if (status == GameSituation.ActiveTest) // Время отвечать 
 						{
-							Console.WriteLine("Отвечай на рандом!");
+							Random rnd = new Random();							
+							_clicker.ClickTest(rnd.Next(1, 5)); // Рандомный клик
 						}
 						return;
 					}
@@ -246,7 +251,7 @@ namespace ConsoleRecogniser.Models
 							var rigthVar = question.GetRightOrDefault();
 							if (rigthVar == null) // Такого не должно быть, но вдруг
 							{
-								Console.WriteLine("Не смог найти ответ, однако в БД вопрос уже есть :(");
+								Debug.WriteLine("Не смог найти ответ, однако в БД вопрос уже есть :(");
 							}
 							else
 							{
@@ -266,8 +271,8 @@ namespace ConsoleRecogniser.Models
 										rightNumber = i;
 										break;
 									}
-								}
-								Console.WriteLine($"Ответ найден! Кликай по {rightNumber} номеру с текстом: {rightText}");
+								}								
+								_clicker.ClickTest(rightNumber);
 							}
 						}
 						return;
@@ -285,12 +290,12 @@ namespace ConsoleRecogniser.Models
 				var question = _testRepository.FirstOrDefault(TestText);
 				if (question == null) // Не должно быть такого, но если перед AnswerTest не было ActiveTest или InactiveTest
 				{
-					Console.WriteLine("Не записали ответ. Теперь в базе дырка :(");
+					Debug.WriteLine("Не успели записать вопрос");
 					return;
 				}
 				if (question.HasRight()) // Если уже есть ответ на этот вопрос
 				{
-					Console.WriteLine("Ответ на этот вопрос уже есть в базе. Пропускаем");
+					Debug.WriteLine("Ответ на этот вопрос уже есть в базе. Пропускаем");
 					return;
 				}
 
@@ -302,7 +307,7 @@ namespace ConsoleRecogniser.Models
 
 				if (string.IsNullOrEmpty(rightText) || string.IsNullOrWhiteSpace(rightText)) // Пустой ответ - ошибка распознавания
 				{
-					Console.WriteLine("Не получилось распознать правильный вариант :(");
+					Debug.WriteLine("Не получилось распознать правильный вариант :(");
 					return;
 				}
 				question.SetRight(rightText); // Устанавливаем правильный текст
@@ -324,7 +329,7 @@ namespace ConsoleRecogniser.Models
 				{
 					if (NumericText == numericText) // Если ничего не поменялось, то выходим, т.к. вопрос еще не успел смениться
 					{
-						Console.WriteLine("Уже следим за этим вопросом -_-");
+						Debug.WriteLine("Уже следим за этим вопросом -_-");
 						return;
 					}
 					NumericText = numericText; // Запоминаем текущий
@@ -350,8 +355,7 @@ namespace ConsoleRecogniser.Models
 							{
 								randomNumber = 1969;
 							}
-
-							Console.WriteLine($"Отвечай на рандом! Например {randomNumber}");
+							_clicker.ClickNumeric(randomNumber);							
 						}
 						return;
 					}
@@ -361,7 +365,7 @@ namespace ConsoleRecogniser.Models
 						{
 							// Получаем правильный ответ из БД
 							int? rightAnswer = question.GetRightOrDefault();
-							if (rightAnswer == null) // Такого не должно быть, но вдруг, если цифра не распозналась
+							if (rightAnswer == null) // Если цифра не распозналась в прошлый раз
 							{
 								Console.WriteLine("Не смог найти ответ, однако в БД вопрос уже есть :(");
 								int randomNumber = 5; // Случайная цифра
@@ -374,12 +378,11 @@ namespace ConsoleRecogniser.Models
 								{
 									randomNumber = 1969;
 								}
-
-								Console.WriteLine($"Отвечай на рандом! Например {randomNumber}");
+								_clicker.ClickNumeric(randomNumber);							
 							}
 							else
 							{
-								Console.WriteLine($"Ответ найден! Набирай {rightAnswer}");
+								_clicker.ClickNumeric(rightAnswer.GetValueOrDefault());								
 							}
 						}
 						return;
@@ -397,12 +400,12 @@ namespace ConsoleRecogniser.Models
 				var question = _numericRepository.FirstOrDefault(NumericText);
 				if (question == null) // Не должно быть такого, но если перед AnswerTest не было ActiveTest или InactiveTest
 				{
-					Console.WriteLine("Не успели записали текст вопроса :(");
+					Debug.WriteLine("Не успели записали текст вопроса :(");
 					return;
 				}
 				if (question.HasRight()) // Если уже есть ответ на этот вопрос
 				{
-					Console.WriteLine("Ответ на этот вопрос уже есть в базе. Пропускаем");
+					Debug.WriteLine("Ответ на этот вопрос уже есть в базе. Пропускаем");
 					return;
 				}
 
@@ -415,12 +418,12 @@ namespace ConsoleRecogniser.Models
 				bool isParsed = int.TryParse(rightText, out int answerNumber); // Пробуем парсить
 				if (string.IsNullOrEmpty(rightText) || string.IsNullOrWhiteSpace(rightText)) // Пустой ответ - ошибка распознавания
 				{
-					Console.WriteLine("Не получилось распознать правильный вариант :(");
+					Debug.WriteLine("Не получилось распознать правильный вариант :(");
 					return;
 				}
 				if (!isParsed)
 				{
-					Console.WriteLine($"Не получилось получить целое число из строки {{{rightText}}}");
+					Debug.WriteLine($"Не получилось получить целое число из строки {{{rightText}}}");
 				}
 				question.SetRight(answerNumber); // Устанавливаем правильный ответ (число)
 				_counter++; // Увеличиваем счетчик записанный ответов для последующего сохранения
@@ -454,23 +457,10 @@ namespace ConsoleRecogniser.Models
 				}
 				Status = status;
 
-				sw.Start();
 				await Act(Screen, Status); // Действие на основе скрина и статуса
-				sw.Stop();
-				if (Status != GameSituation.Idle)
-				{
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.Write("[Время обработки: ");
-					Console.ForegroundColor = ConsoleColor.Yellow;
-					Console.Write($"{ sw.Elapsed.TotalSeconds.ToString("0.000")}");
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.Write(" сек.]\n");
-					Console.ResetColor();
-				}
-
 				SaveRepositories(); // Сохранение репозиториев
 
-				await Task.Delay(200); // Задержка смены кадра
+				await Task.Delay(100); // Задержка смены кадра
 			}
 		}
 
@@ -479,6 +469,6 @@ namespace ConsoleRecogniser.Models
 		{
 			Sync,
 			Async
-		}
+		}		
 	}
 }
