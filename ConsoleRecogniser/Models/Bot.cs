@@ -22,9 +22,11 @@ namespace ConsoleRecogniser.Models
 		private readonly IRepository<NumericQuestion> _numericRepository; // БД циферных вопросов
 		private readonly ICutter _cutter; // Разрезает Bitmap скриншота на фрагменты
 		private readonly IClicker _clicker; // Кликает по правильному ответу и набирает число
+		private readonly IReopener _reopener; // Пересоздает оконченную игру
 
-		public Bitmap Screen { get; private set; }
-		public GameSituation Status { get; private set; } = GameSituation.Default;
+		public Bitmap Screen { get; private set; } // Текущий скрин приложения
+		public GameSituation Status { get; private set; } = GameSituation.Default; // Текущий игровой статус
+		public bool IsGameStarted { get; private set; } = true; // Текущее состояние игры (запущена или нет)
 
 		public int RightTestNumber { get; private set; }  // Текущий правильный в тестовом задании ответ (который подсветился)
 		public string TestText { get; private set; } // Текст ТЕКУЩЕГО текстового вопроса
@@ -36,7 +38,7 @@ namespace ConsoleRecogniser.Models
 		public string NumericText { get; private set; } // Текст ТЕКУЩЕГО циферного вопроса	
 
 
-		public Bot(int processId, IRecogniser recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker)
+		public Bot(int processId, IRecogniser recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker, IReopener reopener)
 		{
 			_process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 			if (_process == null)
@@ -51,9 +53,10 @@ namespace ConsoleRecogniser.Models
 			_numericRepository = numberRepository;
 			_cutter = cutter;
 			_clicker = clicker;
+			_reopener = reopener;
 		}
 
-		public Bot(int processId, IRecogniserAsync recogniserAsync, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker)
+		public Bot(int processId, IRecogniserAsync recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker, IReopener reopener)
 		{
 			_process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 			if (_process == null)
@@ -61,22 +64,40 @@ namespace ConsoleRecogniser.Models
 				Console.WriteLine("Процесс не найден");
 				throw new Exception();
 			}
-			_recogniserAsync = recogniserAsync;
+			_recogniserAsync = recogniser;
 			mode = SyncMode.Async; // Ассинхронный распознаватель
 
 			_testRepository = testRepository;
 			_numericRepository = numberRepository;
 			_cutter = cutter;
 			_clicker = clicker;
+			_reopener = reopener;
 		}
 
 		private GameSituation Analyze(Bitmap src)
 		{
+			if (!IsGameStarted) // Если игра остановлена, то ничего не делаем
+			{
+				return GameSituation.Idle;
+			}
+
+			var thirteenthPixel = Screen.GetPixel(730, 795); // RGB (23, 178, 23) на верхнем градиенте кнопки ОК после окончания игры
+			var fourteenthPixel = Screen.GetPixel(730, 808); // RGB (0, 153, 0) на нижнем градиенте кнопки ОК после окончания игры
+			var fifteenthPixel = Screen.GetPixel(784, 671); // RGB (204, 204, 204) на щите первого места на пъедистале после окончания игры
+			bool isGameFinished = thirteenthPixel.R == 23 && thirteenthPixel.G == 178 && thirteenthPixel.B == 23
+								&& fourteenthPixel.R == 0 && fourteenthPixel.G == 153 && fourteenthPixel.B == 0
+								&& fifteenthPixel.R == 204 && fifteenthPixel.G == 204 && fifteenthPixel.B == 204;
+			if (isGameFinished) // Игра окончена
+			{
+				IsGameStarted = false;
+				return GameSituation.Idle;
+			}
+
 			var firstPixel = src.GetPixel(1190, 468); // RGB (255, 255, 204) сверху справа
 			var secondPixel = src.GetPixel(509, 517); // RGB (242, 233, 219) сверху слева
 			var thirdPixel = src.GetPixel(1184, 816); // RGB (249, 245, 238) снизу справа
 			var fourthPixel = src.GetPixel(998, 619); // RGB на тестовом вопросе от (255, 255, 255) до (250, 250, 250) - белый
-			var fivethPixel = src.GetPixel(543, 643); // RGB (165, 88, 37) на краю дартца, если вопрос циферный
+			var fifthPixel = src.GetPixel(543, 643); // RGB (165, 88, 37) на краю дартца, если вопрос циферный
 
 			bool isQuestion = firstPixel.R == 255 && firstPixel.G == 255 && firstPixel.B == 204
 							&& secondPixel.R == 242 && secondPixel.G == 233 && secondPixel.B == 219
@@ -84,7 +105,7 @@ namespace ConsoleRecogniser.Models
 
 			if (isQuestion) // На экране вопрос (какой? еще неизвестно)
 			{
-				bool isTest = !(fivethPixel.R == 165 && fivethPixel.G == 88 && fivethPixel.B == 37); // Вопрос тестовый (не циферный)
+				bool isTest = !(fifthPixel.R == 165 && fifthPixel.G == 88 && fifthPixel.B == 37); // Вопрос тестовый (не циферный)
 				var sixthPixel = src.GetPixel(1028, 735); // RGB на полоске оценки вопроса, слегка желтая (238, 224, 157) И на тестовом, и на цифровом
 				bool isInactive = sixthPixel.R == 238 && sixthPixel.G == 224 && sixthPixel.B == 157;
 
@@ -484,11 +505,18 @@ namespace ConsoleRecogniser.Models
 			}
 		}
 
+		private void ReopenGame()
+		{
+			_reopener.Reopen(); // Пересоздает игру
+			IsGameStarted = true; // Игра запущена после перезапуска
+			Console.ForegroundColor = ConsoleColor.Cyan;
+			Console.WriteLine("[Система]: Игра начата!");
+		}
+
 		public async Task StartAsync()
 		{
 			while (true)
-			{
-				var sw = new Stopwatch();
+			{				
 				Screen = _process.Screenshoot(); // Получение нового скрина приложения
 				var status = Analyze(Screen); // Анализ нового скрина
 				if (Status != status) // Если статус сменился
@@ -497,14 +525,23 @@ namespace ConsoleRecogniser.Models
 				}
 				Status = status;
 
-				await Act(Screen, Status); // Действие на основе скрина и статуса
-				SaveRepositories(); // Сохранение репозиториев
+				if (IsGameStarted) // Если игра начата
+				{
+					await Act(Screen, Status); // Действие на основе скрина и статуса
+					SaveRepositories(); // Сохранение репозиториев
+				}
+				else // Нужно пересоздать игру (комнату)
+				{
+					Console.ForegroundColor = ConsoleColor.Cyan;
+					Console.WriteLine("[Система]: Игра окончена!");
+					ReopenGame(); // Пересоздаем игру
+					Console.ResetColor();
+				}
 
 				await Task.Delay(100); // Задержка смены кадра
 			}
 		}
-
-
+			
 		private enum SyncMode
 		{
 			Sync,

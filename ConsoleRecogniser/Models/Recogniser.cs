@@ -24,13 +24,7 @@ namespace ConsoleRecogniser.Models
 		// Легкое распознавание 
 		public string Recognise(Bitmap src)
 		{
-			string text = string.Empty;
-			Image<Bgr, byte> image = src.ToImage<Bgr, byte>();		
-			_tesseract.SetImage(image);
-			_tesseract.Recognize();
-			text = _tesseract.GetUTF8Text();
-						
-			return text;
+			return RecogniseHard(src);
 		}		
 
 		// Тяжелое распознование

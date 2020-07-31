@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleRecogniser.Models
 {
-	class Clicker : IClicker
+	class ClickerFHD : IClicker
 	{
         private Process _process;
 
@@ -55,7 +55,7 @@ namespace ConsoleRecogniser.Models
             CAPACITY = 256,
             CB_SETCURSEL = 0x014E;
 
-		public Clicker(int processId)
+		public ClickerFHD(int processId)
 		{
             _process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
             if (_process == null)
@@ -72,13 +72,7 @@ namespace ConsoleRecogniser.Models
             SendMessage(hwnd, WM_LBUTTONUP, IntPtr.Zero, new IntPtr(y * 0x10000 + x));
         }
 
-        // Клик по координатам
-        private void Click(int x, int y)
-		{
-            IntPtr hwnd = _process.MainWindowHandle;
-            ClickMouseLeft(hwnd, x, y);
-		}
-
+      
         // Клик по клавишам на клавиатуре циферного вопроса
         private void ClickOnNumber(int num)
         {
@@ -158,6 +152,14 @@ namespace ConsoleRecogniser.Models
         static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
 
+        // Клик по координатам
+        public void Click(int x, int y)
+        {
+            IntPtr hwnd = _process.MainWindowHandle;
+            ClickMouseLeft(hwnd, x, y);
+        }
+
+        // Клик по ответу тестового вопроса с номером ответа answerNumber
         public void ClickTest(int answerNumber)
 		{
             switch (answerNumber)
@@ -180,6 +182,7 @@ namespace ConsoleRecogniser.Models
             Console.WriteLine("Здесь должен быть клик по номеру " + answerNumber);
 		}
 
+        // Набрать на циферной клавиатуре число number для циферного вопроса
 		public void ClickNumeric(int number)
 		{
             int[] nums = SplitIntoDigits(number); // Разбиваем на разряды число, которое нужно набрать
@@ -191,7 +194,5 @@ namespace ConsoleRecogniser.Models
             ClickOnSendButton();
 			Console.WriteLine("Здесь нужно набрать число " + number);
 		}
-
-		
 	}
 }

@@ -24,16 +24,7 @@ namespace ConsoleRecogniser.Models
 		// Легкое распознавание 
 		public async Task<string> Recognise(Bitmap src)
 		{
-			return await Task.Run(() =>
-			{
-				string text = string.Empty;
-				Image<Bgr, byte> image = src.ToImage<Bgr, byte>();
-				_tesseract.SetImage(image);
-				_tesseract.Recognize();
-				text = _tesseract.GetUTF8Text();
-
-				return text;
-			});
+			return await RecogniseHard(src);
 		}
 
 		// Тяжелое распознавание 

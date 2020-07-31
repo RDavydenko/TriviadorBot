@@ -56,18 +56,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Bot.cs" />
-    <Compile Include="Models\Clicker.cs" />
+    <Compile Include="Models\ClickerFHD.cs" />
     <Compile Include="Models\CutterFHD.cs" />
     <Compile Include="Models\GameSituation.cs" />
     <Compile Include="Models\IClicker.cs" />
     <Compile Include="Models\ICutter.cs" />
     <Compile Include="Models\IRecogniser.cs" />
     <Compile Include="Models\IRecogniserAsync.cs" />
+    <Compile Include="Models\IReopener.cs" />
     <Compile Include="Models\IRepository.cs" />
     <Compile Include="Models\NumericQuestion.cs" />
     <Compile Include="Models\NumericsRepository.cs" />
     <Compile Include="Models\Recogniser.cs" />
     <Compile Include="Models\RecogniserAsync.cs" />
+    <Compile Include="Models\ReopenerWithBots.cs" />
     <Compile Include="Models\TestsRepository.cs" />
     <Compile Include="Models\TestQuestion.cs" />
     <Compile Include="Models\Tools.cs" />

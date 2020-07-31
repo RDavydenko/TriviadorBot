@@ -23,7 +23,16 @@ namespace ConsoleRecogniser
 				return;
 			}
 
-			Bot bot = new Bot(id, new RecogniserAsync("rusf"), new TestsRepository(), new NumericsRepository(), new CutterFHD(), new Clicker(id));
+			Bot bot = new Bot(
+				processId: id,
+				recogniser: new RecogniserAsync("rusf"),
+				testRepository: new TestsRepository(),
+				numberRepository: new NumericsRepository(),
+				cutter: new CutterFHD(),
+				clicker: new ClickerFHD(id),
+				reopener: new ReopenerWithBots(id, ReopenerWithBots.GameTheme.Art)
+			);			
+
 			bot.StartAsync().Wait();
 		}
 	}
