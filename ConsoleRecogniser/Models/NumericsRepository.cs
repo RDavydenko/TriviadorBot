@@ -53,8 +53,7 @@ namespace ConsoleRecogniser.Models
 			string serialized = JsonConvert.SerializeObject(_db); // Сохраняет ВСЕ, даже пустые, чтоб потом можно было подправить вручную (дописать числа int)
 			var streamWriter = new StreamWriter(new FileStream(_path, FileMode.Create, FileAccess.Write));
 			streamWriter.Write(serialized);
-			streamWriter.Close();
-			Console.WriteLine("Прошло сохранение циферных вопросов...");
+			streamWriter.Close();			
 		}
 	}
 }

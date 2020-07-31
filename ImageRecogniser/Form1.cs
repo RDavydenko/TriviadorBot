@@ -73,6 +73,7 @@ namespace ImageRecogniser
 			}
 		}
 		private ScreenResolution resolution = ScreenResolution.FullScreenForTest;
+		private GameMode gameMode;
 
 		private string path = string.Empty;
 		private int width;
@@ -80,7 +81,7 @@ namespace ImageRecogniser
 
 		public Bitmap CurrentScreen { get; set; }
 
-		public Bitmap Question { get; private set; }
+		public Bitmap TextQuestion { get; private set; }
 		public Bitmap Variant1 { get; private set; }
 		public Bitmap Variant2 { get; private set; }
 		public Bitmap Variant3 { get; private set; }
@@ -185,6 +186,7 @@ namespace ImageRecogniser
 			var text = string.Empty;
 
 			Tesseract tesseract = new Tesseract(@"C:\tessdata", "rusf", OcrEngineMode.LstmOnly);
+
 			double coeff = 0d;
 			double startGamma = 1.4d;
 			double endGamma = 2.5d;
@@ -199,7 +201,7 @@ namespace ImageRecogniser
 				tesseract.Recognize();
 				text = tesseract.GetUTF8Text();
 
-				coeff = 1.3d; // Чем меньше, тем больше захватывается соседних пикселей
+				coeff = 0.7d; // Чем меньше, тем больше захватывается соседних пикселей
 				double endCoeff = 2.0d;
 				double coeffStep = 0.35d - 0.01d;
 				while (coeff <= endCoeff && (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text)))
@@ -259,7 +261,7 @@ namespace ImageRecogniser
 			double gamma = startGamma;
 			while (gamma <= endGamma && (string.IsNullOrEmpty(QuestionText) || string.IsNullOrWhiteSpace(QuestionText)))
 			{
-				Image<Bgr, byte> imageCV = Question.ToImage<Bgr, byte>();
+				Image<Bgr, byte> imageCV = TextQuestion.ToImage<Bgr, byte>();
 				imageCV._GammaCorrect(gamma);
 				tessaract.SetImage(imageCV);
 				tessaract.Recognize();
@@ -329,39 +331,43 @@ namespace ImageRecogniser
 			NumberAnswerText = string.Empty;
 		}
 
-		// Нарезать (для тестового вопроса)
+		// Нарезать 
 		private void cutToolStripButton2_Click(object sender, EventArgs e)
 		{
+			if (gameMode == GameMode.TestQuestion)
+			{
+				int questionX;
+				int questionY;
+				int questionWidth;
+				int questionHeigth;
 
-			Image temp = pictureBox1.Image;
-			Bitmap src = new Bitmap(temp, temp.Width, temp.Height);
+				int firstRectLeftTopCoordX;
+				int firstRectLeftTopCoordY;
+				int between;
+				int varWidth;
+				int varHeigth;
 
-			int questionX;
-			int questionY;
-			int questionWidth;
-			int questionHeigth;
+				InitializeValues(resolution, out questionX, out questionY, out questionWidth, out questionHeigth, out firstRectLeftTopCoordX, out firstRectLeftTopCoordY, out between, out varWidth, out varHeigth);
 
-			int firstRectLeftTopCoordX;
-			int firstRectLeftTopCoordY;
-			int between;
-			int varWidth;
-			int varHeigth;
+				Rectangle rect1 = new Rectangle(new Point(questionX, questionY), new Size(questionWidth, questionHeigth)); // Вопрос
+				Rectangle rect2 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY), new Size(varWidth, varHeigth)); // Вариант 1
+				Rectangle rect3 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 1 * varHeigth + 1 * between), new Size(varWidth, varHeigth)); // Вариант 2
+				Rectangle rect4 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 2 * varHeigth + 2 * between), new Size(varWidth, varHeigth)); // Вариант 3
+				Rectangle rect5 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 3 * varHeigth + 3 * between), new Size(varWidth, varHeigth)); // Вариант 4
 
-			InitializeValues(resolution, out questionX, out questionY, out questionWidth, out questionHeigth, out firstRectLeftTopCoordX, out firstRectLeftTopCoordY, out between, out varWidth, out varHeigth);
+				TextQuestion = CutImage(CurrentScreen, rect1);
+				Variant1 = CutImage(CurrentScreen, rect2);
+				Variant2 = CutImage(CurrentScreen, rect3);
+				Variant3 = CutImage(CurrentScreen, rect4);
+				Variant4 = CutImage(CurrentScreen, rect5);
 
-			Rectangle rect1 = new Rectangle(new Point(questionX, questionY), new Size(questionWidth, questionHeigth)); // Вопрос
-			Rectangle rect2 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY), new Size(varWidth, varHeigth)); // Вариант 1
-			Rectangle rect3 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 1 * varHeigth + 1 * between), new Size(varWidth, varHeigth)); // Вариант 2
-			Rectangle rect4 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 2 * varHeigth + 2 * between), new Size(varWidth, varHeigth)); // Вариант 3
-			Rectangle rect5 = new Rectangle(new Point(firstRectLeftTopCoordX, firstRectLeftTopCoordY + 3 * varHeigth + 3 * between), new Size(varWidth, varHeigth)); // Вариант 4
-
-			Question = CutImage(src, rect1);
-			Variant1 = CutImage(src, rect2);
-			Variant2 = CutImage(src, rect3);
-			Variant3 = CutImage(src, rect4);
-			Variant4 = CutImage(src, rect5);
-
-			pictureBox1.Image = Question;
+				pictureBox1.Image = TextQuestion;
+			}
+			else if (gameMode == GameMode.NumericQuestion)
+			{
+				CutForNumberQuestion();
+				pictureBox1.Image = NumberQuestion;
+			}
 		}
 
 		private void CutForNumberQuestion()
@@ -417,7 +423,14 @@ namespace ImageRecogniser
 
 		private void questionBtn_Click(object sender, EventArgs e)
 		{
-			pictureBox1.Image = Question;
+			if (gameMode == GameMode.TestQuestion)
+			{
+				pictureBox1.Image = TextQuestion;
+			}
+			else if (gameMode == GameMode.NumericQuestion)
+			{
+				pictureBox1.Image = NumberQuestion;
+			}
 		}
 
 		private void variant1Btn_Click(object sender, EventArgs e)
@@ -444,11 +457,11 @@ namespace ImageRecogniser
 		{
 			if (toolStripComboBox1.SelectedIndex == 0)
 			{
-				resolution = ScreenResolution.FullScreenForTest;
+				gameMode = GameMode.TestQuestion;
 			}
 			else if (toolStripComboBox1.SelectedIndex == 1)
 			{
-				resolution = ScreenResolution.HalfScreen;
+				gameMode = GameMode.NumericQuestion;
 			}
 		}
 
@@ -841,9 +854,15 @@ namespace ImageRecogniser
 			}
 		}
 
-		private void toolStripButton1_Click_1(object sender, EventArgs e)
+		private void numericAnswerBtn_Click(object sender, EventArgs e)
 		{
-			CutForNumberQuestion();
+			pictureBox1.Image = NumberAnswer;
+		}
+
+		
+		private async void testBtn_Click_1(object sender, EventArgs e)
+		{
+			
 		}
 	}
 
@@ -853,5 +872,12 @@ namespace ImageRecogniser
 		HalfScreen
 	}
 
-
+	public enum GameMode
+	{
+		TestQuestion,
+		NumericQuestion
+	}
 }
+
+
+

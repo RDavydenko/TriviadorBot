@@ -13,8 +13,8 @@ namespace ConsoleRecogniser
 	class Program
 	{
 		static void Main(string[] args)
-		{			
-			Console.Write("Введите ID процесса: ");
+		{
+			Console.Write("Введите ID процесса браузера Chrome: ");
 			string processId = Console.ReadLine();
 
 			if (!int.TryParse(processId, out int id))
@@ -23,7 +23,7 @@ namespace ConsoleRecogniser
 				return;
 			}
 
-			Bot bot = new Bot(id, new RecogniserAsync("rusf"), new TestsRepository(), new NumericsRepository(), new CutterFHD(), new Clicker());
+			Bot bot = new Bot(id, new RecogniserAsync("rusf"), new TestsRepository(), new NumericsRepository(), new CutterFHD(), new Clicker(id));
 			bot.StartAsync().Wait();
 		}
 	}

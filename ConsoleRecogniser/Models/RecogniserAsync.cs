@@ -18,15 +18,33 @@ namespace ConsoleRecogniser.Models
 		{
 			OcrEngineMode mode = lang == "rusf" ? OcrEngineMode.LstmOnly : OcrEngineMode.TesseractLstmCombined;
 			_tesseract = new Tesseract(@"C:\tessdata", lang, mode);
+			_tesseract.SetVariable("user_defined_dpi", "300"); // Установка dpi, чтоб не ругался и не выдавал предупреждения
 		}
 
+		// Легкое распознавание 
 		public async Task<string> Recognise(Bitmap src)
 		{
 			return await Task.Run(() =>
 			{
 				string text = string.Empty;
 				Image<Bgr, byte> image = src.ToImage<Bgr, byte>();
-				_tesseract.SetVariable("user_defined_dpi", "300"); // Установка dpi, чтоб не ругался и не выдавал предупреждения
+				_tesseract.SetImage(image);
+				_tesseract.Recognize();
+				text = _tesseract.GetUTF8Text();
+
+				return text;
+			});
+		}
+
+		// Тяжелое распознавание 
+		public async Task<string> RecogniseHard(Bitmap src)
+		{
+			// TODO: использовать для распознавания цифр!!!
+			// TODO: улучшить алгоритм распознавания цифр!!!
+			return await Task.Run(() =>
+			{
+				string text = string.Empty;
+				Image<Bgr, byte> image = src.ToImage<Bgr, byte>();				
 				_tesseract.SetImage(image);
 				_tesseract.Recognize();
 				text = _tesseract.GetUTF8Text();
@@ -77,14 +95,7 @@ namespace ConsoleRecogniser.Models
 					gamma += stepGamma;
 				}
 				return text;
-			});
-		}
-
-		public async Task<string> RecogniseHard(Bitmap src)
-		{
-			// TODO: использовать для распознавания цифр!!!
-			// TODO: улучшить алгоритм распознавания цифр!!!
-			return await Recognise(src);
+			});			
 		}
 	}
 }

@@ -26,8 +26,12 @@ namespace ConsoleRecogniser.Models
 		public Bitmap Screen { get; private set; }
 		public GameSituation Status { get; private set; } = GameSituation.Default;
 
-		public string TestText { get; private set; } // Текст ТЕКУЩЕГО текстового вопроса
 		public int RightTestNumber { get; private set; }  // Текущий правильный в тестовом задании ответ (который подсветился)
+		public string TestText { get; private set; } // Текст ТЕКУЩЕГО текстового вопроса
+		public string Var1Text { get; private set; } // Текст ТЕКУЩЕГО текстового варианта 1
+		public string Var2Text { get; private set; } // Текст ТЕКУЩЕГО текстового варианта 2
+		public string Var3Text { get; private set; } // Текст ТЕКУЩЕГО текстового варианта 3
+		public string Var4Text { get; private set; } // Текст ТЕКУЩЕГО текстового варианта 4
 
 		public string NumericText { get; private set; } // Текст ТЕКУЩЕГО циферного вопроса	
 
@@ -236,15 +240,58 @@ namespace ConsoleRecogniser.Models
 						};
 						_testRepository.Add(newQuestion); // Добавляем новую запись в БД
 
+						// Лучше распознать варианты сразу, чтоб потом не было неточностей из-за того, что правильный вариант может подкраситься цветом
+						if (mode == SyncMode.Sync)
+							Var1Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 1));
+						else if (mode == SyncMode.Async)
+							Var1Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 1));
+
+						if (mode == SyncMode.Sync)
+							Var2Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 2));
+						else if (mode == SyncMode.Async)
+							Var2Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 2));
+
+						if (mode == SyncMode.Sync)
+							Var3Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 3));
+						else if (mode == SyncMode.Async)
+							Var3Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 3));
+
+						if (mode == SyncMode.Sync)
+							Var4Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 4));
+						else if (mode == SyncMode.Async)
+							Var4Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 4));
+
+
 						if (status == GameSituation.ActiveTest) // Время отвечать 
 						{
-							Random rnd = new Random();							
-							_clicker.ClickTest(rnd.Next(1, 5)); // Рандомный клик
+							Random rnd = new Random();
+							_clicker.ClickTest(rnd.Next(1, 5)); // Рандомный клик							
 						}
 						return;
 					}
 					else // Вопрос уже есть в БД
 					{
+						// Лучше распознать варианты сразу, чтоб потом не было неточностей из-за того, что правильный вариант может подкраситься цветом
+						if (mode == SyncMode.Sync)
+							Var1Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 1));
+						else if (mode == SyncMode.Async)
+							Var1Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 1));
+
+						if (mode == SyncMode.Sync)
+							Var2Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 2));
+						else if (mode == SyncMode.Async)
+							Var2Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 2));
+
+						if (mode == SyncMode.Sync)
+							Var3Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 3));
+						else if (mode == SyncMode.Async)
+							Var3Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 3));
+
+						if (mode == SyncMode.Sync)
+							Var4Text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, 4));
+						else if (mode == SyncMode.Async)
+							Var4Text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, 4));
+
 						if (status == GameSituation.ActiveTest) // Время отвечать
 						{
 							// Получаем правильный ответ из БД
@@ -253,25 +300,18 @@ namespace ConsoleRecogniser.Models
 							{
 								Debug.WriteLine("Не смог найти ответ, однако в БД вопрос уже есть :(");
 							}
-							else
+							else // Ответ есть в БД
 							{
-								int rightNumber = 0;
-								string rightText = string.Empty;
-								for (int i = 1; i <= 4; i++) // Пройдемся по всем вариантам, найдем с соответствующим текстом
-								{
-									string text = string.Empty;
-									if (mode == SyncMode.Sync)
-										text = _recogniser.Recognise(_cutter.CutQuestionVariant(Screen, i));
-									else if (mode == SyncMode.Async)
-										text = await _recogniserAsync.Recognise(_cutter.CutQuestionVariant(Screen, i));
+								int rightNumber = 1;
+								if (question.Answer == Var1Text)
+									rightNumber = 1;
+								else if (question.Answer == Var2Text)
+									rightNumber = 2;
+								else if (question.Answer == Var3Text)
+									rightNumber = 3;
+								else if (question.Answer == Var4Text)
+									rightNumber = 4;
 
-									if (question.Answer == text) // Правильный варинат в текущей расстановке ответов найден!
-									{
-										rightText = text;
-										rightNumber = i;
-										break;
-									}
-								}								
 								_clicker.ClickTest(rightNumber);
 							}
 						}
@@ -355,7 +395,7 @@ namespace ConsoleRecogniser.Models
 							{
 								randomNumber = 1969;
 							}
-							_clicker.ClickNumeric(randomNumber);							
+							_clicker.ClickNumeric(randomNumber);
 						}
 						return;
 					}
@@ -378,11 +418,11 @@ namespace ConsoleRecogniser.Models
 								{
 									randomNumber = 1969;
 								}
-								_clicker.ClickNumeric(randomNumber);							
+								_clicker.ClickNumeric(randomNumber);
 							}
 							else
 							{
-								_clicker.ClickNumeric(rightAnswer.GetValueOrDefault());								
+								_clicker.ClickNumeric(rightAnswer.Value);
 							}
 						}
 						return;
@@ -435,7 +475,7 @@ namespace ConsoleRecogniser.Models
 
 		private void SaveRepositories()
 		{
-			int n = 2; // Каждые n добавленных вопросов происходит сохранение репоситориев. 2 - каждый раз
+			int n = 2; // Каждые n добавленных вопросов происходит сохранение репозиториев. 2 - каждый раз
 			if (_counter % n == 0 && _counter != 0)
 			{
 				_testRepository.Save();
@@ -469,6 +509,6 @@ namespace ConsoleRecogniser.Models
 		{
 			Sync,
 			Async
-		}		
+		}
 	}
 }

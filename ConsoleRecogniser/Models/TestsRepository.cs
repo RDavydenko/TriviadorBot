@@ -52,8 +52,7 @@ namespace ConsoleRecogniser.Models
 			string serialized = JsonConvert.SerializeObject(_db.Where(q => q.Answer != string.Empty)); // Сохраняет только не с пустым ответом
 			var streamWriter = new StreamWriter(new FileStream(_path, FileMode.Create, FileAccess.Write));
 			streamWriter.Write(serialized);
-			streamWriter.Close();
-			Console.WriteLine("Прошло сохранение тестовых вопросов...");
+			streamWriter.Close();			
 		}
 	}
 }
