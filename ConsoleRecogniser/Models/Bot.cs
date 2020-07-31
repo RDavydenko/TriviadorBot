@@ -333,6 +333,9 @@ namespace ConsoleRecogniser.Models
 								else if (question.Answer == Var4Text)
 									rightNumber = 4;
 
+								Console.ForegroundColor = ConsoleColor.Green;
+								Console.WriteLine("[Успех]: Помог ответ из БД");
+								Console.ResetColor();
 								_clicker.ClickTest(rightNumber);
 							}
 						}
@@ -408,11 +411,11 @@ namespace ConsoleRecogniser.Models
 						{
 							int randomNumber = 5; // Случайная цифра
 												  // Псевдорандом по вхождению строк
-							if (numericText.Contains("век") && !numericText.Contains("человек"))
+							if (numericText.ToLower().Contains("век") && !numericText.ToLower().Contains("человек"))
 							{
 								randomNumber = 18;
 							}
-							else if (numericText.Contains("год"))
+							else if (numericText.ToLower().Contains("год"))
 							{
 								randomNumber = 1969;
 							}
@@ -431,14 +434,17 @@ namespace ConsoleRecogniser.Models
 								Console.WriteLine("Не смог найти ответ, однако в БД вопрос уже есть :(");
 								int randomNumber = 5; // Случайная цифра
 													  // Псевдорандом по вхождению строк
-								if (numericText.Contains("век") && !numericText.Contains("человек"))
+								if (numericText.ToLower().Contains("век") && !numericText.ToLower().Contains("человек"))
 								{
 									randomNumber = 18;
 								}
-								else if (numericText.Contains("год"))
+								else if (numericText.ToLower().Contains("год"))
 								{
 									randomNumber = 1969;
 								}
+								Console.ForegroundColor = ConsoleColor.Green;
+								Console.WriteLine("[Успех]: Набрали ответ из БД");
+								Console.ResetColor();
 								_clicker.ClickNumeric(randomNumber);
 							}
 							else
@@ -511,6 +517,7 @@ namespace ConsoleRecogniser.Models
 			IsGameStarted = true; // Игра запущена после перезапуска
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine("[Система]: Игра начата!");
+			Console.ResetColor();
 		}
 
 		public async Task StartAsync()
@@ -534,11 +541,11 @@ namespace ConsoleRecogniser.Models
 				{
 					Console.ForegroundColor = ConsoleColor.Cyan;
 					Console.WriteLine("[Система]: Игра окончена!");
-					ReopenGame(); // Пересоздаем игру
 					Console.ResetColor();
+					ReopenGame(); // Пересоздаем игру
 				}
 
-				await Task.Delay(100); // Задержка смены кадра
+				await Task.Delay(300); // Задержка смены кадра
 			}
 		}
 			
