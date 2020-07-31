@@ -81,11 +81,13 @@ namespace ConsoleRecogniser.Models
 				return GameSituation.Idle;
 			}
 
-			var thirteenthPixel = Screen.GetPixel(730, 795); // RGB (23, 178, 23) на верхнем градиенте кнопки ОК после окончания игры
-			var fourteenthPixel = Screen.GetPixel(730, 808); // RGB (0, 153, 0) на нижнем градиенте кнопки ОК после окончания игры
+			var thirteenthPixel = Screen.GetPixel(730, 795); // RGB от (23, 178, 23) до (99, 203, 99) на верхнем градиенте кнопки ОК после окончания игры
+			var fourteenthPixel = Screen.GetPixel(730, 808); // RGB от (0, 153, 0) до (84, 186, 84) на нижнем градиенте кнопки ОК после окончания игры
 			var fifteenthPixel = Screen.GetPixel(784, 671); // RGB (204, 204, 204) на щите первого места на пъедистале после окончания игры
-			bool isGameFinished = thirteenthPixel.R == 23 && thirteenthPixel.G == 178 && thirteenthPixel.B == 23
-								&& fourteenthPixel.R == 0 && fourteenthPixel.G == 153 && fourteenthPixel.B == 0
+			bool isGameFinished = ((thirteenthPixel.R == 23 && thirteenthPixel.G == 178 && thirteenthPixel.B == 23)
+								|| (thirteenthPixel.R == 99 && thirteenthPixel.G == 203 && thirteenthPixel.B == 99))
+								&& ((fourteenthPixel.R == 0 && fourteenthPixel.G == 153 && fourteenthPixel.B == 0)
+								|| (fourteenthPixel.R == 84 && fourteenthPixel.G == 186 && fourteenthPixel.B == 84))
 								&& fifteenthPixel.R == 204 && fifteenthPixel.G == 204 && fifteenthPixel.B == 204;
 			if (isGameFinished) // Игра окончена
 			{
@@ -523,28 +525,35 @@ namespace ConsoleRecogniser.Models
 		public async Task StartAsync()
 		{
 			while (true)
-			{				
-				Screen = _process.Screenshoot(); // Получение нового скрина приложения
-				var status = Analyze(Screen); // Анализ нового скрина
-				if (Status != status) // Если статус сменился
+			{
+				try
 				{
-					Say(status); // Описание статуса анализа 
-				}
-				Status = status;
+					Screen = _process.Screenshoot(); // Получение нового скрина приложения
+					var status = Analyze(Screen); // Анализ нового скрина
+					if (Status != status) // Если статус сменился
+					{
+						Say(status); // Описание статуса анализа 
+					}
+					Status = status;
 
-				if (IsGameStarted) // Если игра начата
-				{
-					await Act(Screen, Status); // Действие на основе скрина и статуса
-					SaveRepositories(); // Сохранение репозиториев
-				}
-				else // Нужно пересоздать игру (комнату)
-				{
-					Console.ForegroundColor = ConsoleColor.Cyan;
-					Console.WriteLine("[Система]: Игра окончена!");
-					Console.ResetColor();
-					ReopenGame(); // Пересоздаем игру
-				}
+					if (IsGameStarted) // Если игра начата
+					{
+						await Act(Screen, Status); // Действие на основе скрина и статуса
+						SaveRepositories(); // Сохранение репозиториев
+					}
+					else // Нужно пересоздать игру (комнату)
+					{
+						Console.ForegroundColor = ConsoleColor.Cyan;
+						Console.WriteLine("[Система]: Игра окончена!");
+						Console.ResetColor();
+						ReopenGame(); // Пересоздаем игру
+					}
 
+				}
+				catch (ArgumentOutOfRangeException) // Если свернули приложение
+				{
+					Console.Write("\a");
+				}
 				await Task.Delay(300); // Задержка смены кадра
 			}
 		}
