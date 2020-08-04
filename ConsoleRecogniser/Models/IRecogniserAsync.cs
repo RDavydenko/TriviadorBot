@@ -2,7 +2,7 @@
 
 namespace ConsoleRecogniser.Models
 {
-	interface IRecogniserAsync
+	interface IAsyncRecogniser
 	{
 		Task<string> Recognise(System.Drawing.Bitmap src);
 		Task<string> RecogniseHard(System.Drawing.Bitmap src);

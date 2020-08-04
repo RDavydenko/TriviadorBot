@@ -13,7 +13,7 @@ namespace ConsoleRecogniser.Models
 
 		private readonly SyncMode mode; // Указывает на то, какой используется распознаватель (синхронный/асинхронный)
 		private readonly IRecogniser _recogniser; // Синхронный распознаватель
-		private readonly IRecogniserAsync _recogniserAsync; // Ассинхронный распознаватель
+		private readonly IAsyncRecogniser _recogniserAsync; // Ассинхронный распознаватель
 
 		private readonly IRepository<TestQuestion> _testRepository; // БД тестовых вопросов
 		private readonly IRepository<NumericQuestion> _numericRepository; // БД циферных вопросов
@@ -53,7 +53,7 @@ namespace ConsoleRecogniser.Models
 			_reopener = reopener;
 		}
 
-		public Bot(int processId, IRecogniserAsync recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker, IReopener reopener)
+		public Bot(int processId, IAsyncRecogniser recogniser, IRepository<TestQuestion> testRepository, IRepository<NumericQuestion> numberRepository, ICutter cutter, IClicker clicker, IReopener reopener)
 		{
 			_process = Process.GetProcesses().FirstOrDefault(p => p.Id == processId);
 			if (_process == null)
@@ -490,6 +490,7 @@ namespace ConsoleRecogniser.Models
 				if (!isParsed)
 				{
 					Debug.WriteLine($"Не получилось получить целое число из строки {{{rightText}}}");
+					return;
 				}
 				question.SetRight(answerNumber); // Устанавливаем правильный ответ (число)
 				_counter++; // Увеличиваем счетчик записанный ответов для последующего сохранения

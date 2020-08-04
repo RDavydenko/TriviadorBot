@@ -6,14 +6,15 @@ using Emgu.CV.Structure;
 
 namespace ConsoleRecogniser.Models
 {
-	class RecogniserAsync : IRecogniserAsync
+	class RecogniserAsync : IAsyncRecogniser
 	{
 		private Tesseract _tesseract;
 
 		public RecogniserAsync(string lang = "rusf")
 		{
+			string dataPath = "tessdata"; // Папка, где лежат traineddata
 			OcrEngineMode mode = lang == "rusf" ? OcrEngineMode.LstmOnly : OcrEngineMode.TesseractLstmCombined;
-			_tesseract = new Tesseract(@"C:\tessdata", lang, mode);
+			_tesseract = new Tesseract(dataPath, lang, mode);
 			_tesseract.SetVariable("user_defined_dpi", "300"); // Установка dpi, чтоб не ругался и не выдавал предупреждения
 		}
 
