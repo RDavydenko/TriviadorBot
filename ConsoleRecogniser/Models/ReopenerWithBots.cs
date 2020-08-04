@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace ConsoleRecogniser.Models
 {
@@ -51,7 +47,7 @@ namespace ConsoleRecogniser.Models
 			{
 				_clicker.Click(780, 690); // Клик по кнопке Убрать все темы
 				switch (theme)
-				{					
+				{
 					case GameTheme.Art:
 						_clicker.Click(463, 670); // Клик по кнопке Искусство
 						break;

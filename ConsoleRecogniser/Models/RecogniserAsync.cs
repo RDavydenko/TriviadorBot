@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+﻿using System.Drawing;
 using System.Threading.Tasks;
 using Emgu.CV;
 using Emgu.CV.OCR;
@@ -35,7 +31,7 @@ namespace ConsoleRecogniser.Models
 			return await Task.Run(() =>
 			{
 				string text = string.Empty;
-				Image<Bgr, byte> image = src.ToImage<Bgr, byte>();				
+				Image<Bgr, byte> image = src.ToImage<Bgr, byte>();
 				_tesseract.SetImage(image);
 				_tesseract.Recognize();
 				text = _tesseract.GetUTF8Text();
@@ -86,7 +82,7 @@ namespace ConsoleRecogniser.Models
 					gamma += stepGamma;
 				}
 				return text;
-			});			
+			});
 		}
 	}
 }

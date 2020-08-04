@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConsoleRecogniser.Models
 {
@@ -45,7 +41,7 @@ namespace ConsoleRecogniser.Models
 		public Bitmap CutNumericText(Bitmap src)
 		{
 			Rectangle rect = new Rectangle(new Point(506, 365), new Size(575, 109)); // Вопрос			
-			return Cut(src, rect);			
+			return Cut(src, rect);
 		}
 
 		public Bitmap CutNumericAnswer(Bitmap src)

@@ -338,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+#ImageRecogniser - winForms app (only for tests)
+ImageRecogniser/

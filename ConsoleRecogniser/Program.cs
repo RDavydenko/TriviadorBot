@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using ConsoleRecogniser.Models;
 
 namespace ConsoleRecogniser
@@ -31,7 +24,7 @@ namespace ConsoleRecogniser
 				cutter: new CutterFHD(),
 				clicker: new ClickerFHD(id),
 				reopener: new ReopenerWithBots(id, ReopenerWithBots.GameTheme.Art)
-			);			
+			);
 
 			bot.StartAsync().Wait();
 		}

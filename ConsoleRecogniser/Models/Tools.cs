@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Emgu.CV;
-using Emgu.CV.Structure;
 
 namespace ConsoleRecogniser.Models
 {

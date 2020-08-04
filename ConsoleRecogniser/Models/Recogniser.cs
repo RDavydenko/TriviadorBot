@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.OCR;
 using Emgu.CV.Structure;
@@ -25,7 +20,7 @@ namespace ConsoleRecogniser.Models
 		public string Recognise(Bitmap src)
 		{
 			return RecogniseHard(src);
-		}		
+		}
 
 		// Тяжелое распознование
 		public string RecogniseHard(Bitmap src)
@@ -33,7 +28,7 @@ namespace ConsoleRecogniser.Models
 			// TODO: использовать для распознавания цифр!!!
 			// TODO: улучшить алгоритм распознавания цифр!!!
 			string text = string.Empty;
-			Image<Bgr, byte> image = src.ToImage<Bgr, byte>();			
+			Image<Bgr, byte> image = src.ToImage<Bgr, byte>();
 			_tesseract.SetImage(image);
 			_tesseract.Recognize();
 			text = _tesseract.GetUTF8Text();

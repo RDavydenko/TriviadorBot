@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ImageRecogniser.Models
+﻿namespace ImageRecogniser.Models
 {
 	class NumberQuestion
 	{

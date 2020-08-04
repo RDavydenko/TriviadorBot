@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Emgu.CV;
@@ -859,10 +857,10 @@ namespace ImageRecogniser
 			pictureBox1.Image = NumberAnswer;
 		}
 
-		
+
 		private async void testBtn_Click_1(object sender, EventArgs e)
 		{
-			
+
 		}
 	}
 

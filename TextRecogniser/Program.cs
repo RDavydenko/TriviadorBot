@@ -1,17 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
 using System.IO;
-
-using Emgu;
 using Emgu.CV;
-using Emgu.CV.Util;
 using Emgu.CV.OCR;
 using Emgu.CV.Structure;
-using Emgu.Util;
 
 
 namespace TextRecogniser
@@ -25,7 +16,7 @@ namespace TextRecogniser
 			filePath = @"triviador_imgs\img_11.png";
 			string currentDirectory = Directory.GetCurrentDirectory();
 
-			bool imageExists = File.Exists(Path.Combine(currentDirectory,filePath));
+			bool imageExists = File.Exists(Path.Combine(currentDirectory, filePath));
 			bool tessdataExists = File.Exists(@"C:\Users\Roman\source\repos\TriviadorBot\TextRecogniser\bin\Debug\tessdata\rus.traineddata");
 
 
