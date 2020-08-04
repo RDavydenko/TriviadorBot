@@ -340,4 +340,4 @@ ASALocalRun/
 healthchecksdb
 
 #ImageRecogniser - winForms app (only for tests)
-ImageRecogniser/
+ImageRecogniser/*
